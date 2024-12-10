@@ -1,10 +1,12 @@
 mod vec3;
 mod ray;
 mod hittable;
+mod hitlist;
 
 use vec3::*;
 use ray::*;
 use hittable::*;
+use hitlist::*;
 
 fn hit_sphere(center: Point3, radius: f64, ray: &Ray) -> f64 {
     let co = center - ray.origin;
@@ -56,7 +58,7 @@ fn main() {
 
     //Code :)
     println!("P3\n{image_width} {image_height}\n255");
-    let mut remaining: i32; 
+    let mut remaining: i32;
 
     for y in 0..image_height {
         remaining = image_height - y;
