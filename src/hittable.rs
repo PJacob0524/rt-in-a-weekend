@@ -9,13 +9,14 @@ impl HitRecord {
     fn set_face_normal(&mut self, r: &Ray, outward_normal: &Vec3) {
         self.front_face = r.direction.dot(outward_normal) < 0.0;
         if self.front_face {
-            self.normal = *outward_normal;
+            self.normal = outward_normal.clone();
+        } else {
+            self.normal = outward_normal.clone() * -1.0;
         }
-        self.normal = -outward_normal;
     }
 }
 
-trait Hittable {
+pub trait Hittable {
     fn hit(&self, r: &Ray, tmin: f64, tmax: f64, record: &mut HitRecord) -> bool { false }
 }
 
@@ -43,18 +44,18 @@ impl Hittable for Sphere {
 
         let sqrtd = discriminant.sqrt();
 
-        let mut root = h - sqrtd;
-        if root <= tmin || root >= tmax {
-            root = h + sqrtd;
-            if root <= tmin || root >= tmax {
+        let mut root = (h - sqrtd) / a;
+        if root < tmin || root > tmax {
+            root = (h + sqrtd) / a;
+            if root < tmin || root > tmax {
                 return false;
             }
         }
 
         hit_record.t = root;
         hit_record.p = r.at(root);
-
-        let outward_normal = (r.at(root) - r.origin) / self.radius;
+        
+        let outward_normal = (hit_record.p - self.center) / self.radius;
         hit_record.set_face_normal(r, &outward_normal);
 
         true

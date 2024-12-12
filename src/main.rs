@@ -8,26 +8,11 @@ use ray::*;
 use hittable::*;
 use hitlist::*;
 
-fn hit_sphere(center: Point3, radius: f64, ray: &Ray) -> f64 {
-    let co = center - ray.origin;
+fn ray_color(r: &Ray, objects: &mut dyn Hittable) -> Color {
+    let mut rec: HitRecord = HitRecord{p: Point3(0.0,0.0,0.0), normal: Vec3(0.0,0.0,0.0), t: 0.0, front_face: false}; 
 
-    let a = ray.direction.dot(&ray.direction);
-    let h = ray.direction.dot(&co);
-    let c = co.dot(&co) - radius * radius;
-
-    let discriminant = h * h - a * c;
-
-    if discriminant >= 0.0{
-        return (h - discriminant.sqrt()) / a;
-    }
-    return -1.0;
-}
-
-fn ray_color(r: &Ray) -> Color {
-    let c = Point3(0.0,0.0,-1.0);
-    let t = hit_sphere(c, 0.5, r);
-    if t != -1.0{
-        return (Color(1.0, 1.0, 1.0) + (r.at(t) - c).unit()) / 2.0;
+    if objects.hit(r, 0.0, 1000000000000.0, &mut rec) {
+        return (rec.normal + Color(1.0,1.0,1.0)) / 2.0;
     }
 
     let a = (r.direction.unit().y() + 1.0) / 2.0;
@@ -56,6 +41,11 @@ fn main() {
     let viewport_upper_left = camera_center - Vec3(0.0,0.0,focal_length) - viewport_u/2.0 - viewport_v/2.0;
     let pixel00 = viewport_upper_left + (pixel_delta_u + pixel_delta_v) / 2.0;
 
+    //Objects
+    let mut world = Hitlist::new();
+    world.push(Box::new(Sphere::new(Point3(0.0,0.0,-1.0), 0.5)));
+    world.push(Box::new(Sphere::new(Point3(0.0,-100.5,-1.0), 100.0)));
+
     //Code :)
     println!("P3\n{image_width} {image_height}\n255");
     let mut remaining: i32;
@@ -66,8 +56,8 @@ fn main() {
         for x in 0..image_width {
             let pix_center = pixel00 + pixel_delta_u * x as f64 + pixel_delta_v * y as f64;
             let ray_direction = pix_center - camera_center;
-            let ray: Ray = Ray{origin: pix_center, direction: ray_direction};
-            ray_color(&ray).write();
+            let ray: Ray = Ray{origin: camera_center, direction: ray_direction};
+            ray_color(&ray, &mut world).write();
         }
     }
     eprint!("\rDone.                            \n");
