@@ -1,5 +1,6 @@
 #![allow(unused)]
 
+use rand::{Rng, RngCore}; 
 use std::ops;
 
 #[derive(Copy, Clone, Debug)]
@@ -32,6 +33,33 @@ impl Vec3 {
 
     pub fn unit(&self) -> Vec3 {
         *self / self.length()
+    }
+
+    pub fn random(min: f64, max: f64) -> Self {
+        let mut rng = rand::thread_rng(); 
+        Point3(rng.gen_range(min..=max),rng.gen_range(min..=max),rng.gen_range(min..=max)) 
+    }
+
+    pub fn unitrand() -> Self {
+        loop {
+            let p = Self::random(-1.0, 1.0);
+            let plensqrt = p.length_squared(); 
+            if (1e-160..1.0).contains(&plensqrt) {
+                return p / plensqrt;
+            }
+        }
+    }
+
+    pub fn hemi_rand(normal: &Vec3) -> Self {
+        let rand = Self::unitrand();
+        if rand.dot(normal) > 0.0 {
+            return rand;
+        }
+        return -rand; 
+    }
+
+    pub fn empty() -> Self {
+        Vec3(0.0,0.0,0.0)
     }
 }
 
@@ -142,10 +170,15 @@ pub use Vec3 as Point3;
 pub use Vec3 as Color;
 
 impl Color{
+    fn lin_to_gamma(&self) -> Self {
+        Color(self.0.sqrt(), self.1.sqrt(), self.2.sqrt())
+    }
+
     pub fn write(&self) {
-        let r: i32 = (self.0 * 255.99) as i32;
-        let g: i32 = (self.1 * 255.99) as i32;
-        let b: i32 = (self.2 * 255.99) as i32;
+        let color = self.lin_to_gamma(); 
+        let r: i32 = (color.0 * 255.99) as i32;
+        let g: i32 = (color.1 * 255.99) as i32;
+        let b: i32 = (color.2 * 255.99) as i32;
         println!("{r} {g} {b}");
     }
 }
