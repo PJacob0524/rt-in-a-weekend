@@ -8,22 +8,10 @@ use crate::vec3::*;
 use crate::ray::*;
 use crate::material::*;
 
-pub struct HitRecord<'a> {pub collision: bool, pub p: Point3, pub normal: Vec3, pub t: f64, pub front_face: bool, pub mat: &'a Option<Box<dyn Material>>}
+pub struct HitRecord<'a> { pub p: Point3, pub normal: Vec3, pub t: f64, pub front_face: bool, pub mat: &'a Box<dyn Material>}
 
 impl HitRecord<'_> {
-    pub fn setfail() -> Self {
-        HitRecord {
-            collision: false,
-            p: Vec3::empty(),
-            normal: Vec3::empty(), 
-            t: 0.0,
-            front_face: false,
-            mat: &Option::None
-        }
-    }
-
-    pub fn set<'a>(r: &Ray, t: f64, outward_normal: &Vec3, mat: &'a Option<Box<dyn Material>> ) -> HitRecord<'a> {
-        let collision = true;
+    pub fn new<'a>(r: &Ray, t: f64, outward_normal: &Vec3, mat: &'a Box<dyn Material> ) -> HitRecord<'a> {
         let t = t;
         let p = r.at(t);
         let mut normal = *outward_normal;
@@ -33,27 +21,26 @@ impl HitRecord<'_> {
             normal = outward_normal.clone() * -1.0;
         }
 
-        HitRecord { collision, t, p, normal, front_face, mat }
+        HitRecord { t, p, normal, front_face, mat }
     }
 }
 
 pub trait Hittable {
-    fn hit(&self, r: &Ray, trange: std::ops::Range<f64>) -> HitRecord {
-        HitRecord::setfail()
+    fn hit(&self, r: &Ray, trange: std::ops::Range<f64>) -> Option<HitRecord> {
+        None
     }
 }
 
-pub struct Sphere {center: Point3, radius: f64, mat: Option<Box<dyn Material>> }
+pub struct Sphere {center: Point3, radius: f64, mat: Box<dyn Material> }
 
 impl Sphere {
-    pub fn new(center: Point3, radius: f64, material: Box<dyn Material>) -> Self {
-        let mat = Some(material);
+    pub fn new(center: Point3, radius: f64, mat: Box<dyn Material>) -> Self {
         Sphere { center, radius, mat }
     }
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, r: &Ray, trange: std::ops::Range<f64>) -> HitRecord {
+    fn hit(&self, r: &Ray, trange: std::ops::Range<f64>) -> Option<HitRecord> {
         let co = self.center - r.origin;
 
         let a = r.direction.dot(&r.direction);
@@ -63,7 +50,7 @@ impl Hittable for Sphere {
         let discriminant = h * h - a * c;
 
         if discriminant < 0.0{
-            return HitRecord::setfail();
+            return None
         }
 
         let sqrtd = discriminant.sqrt();
@@ -72,11 +59,11 @@ impl Hittable for Sphere {
         if !trange.contains(&root) {
             root = (h + sqrtd) / a;
             if !trange.contains(&root) {
-                return HitRecord::setfail();
+                return None
             }
         }
         
         let outward_normal = (r.at(root) - self.center) / self.radius;
-        HitRecord::set(r, root, &outward_normal, &self.mat)
+        Some(HitRecord::new(r, root, &outward_normal, &self.mat))
     }
 }

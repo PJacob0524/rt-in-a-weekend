@@ -22,14 +22,15 @@ impl Hitlist {
 }
 
 impl Hittable for Hitlist {
-    fn hit(&self, r: &Ray, trange: std::ops::Range<f64>) -> HitRecord {
+    fn hit(&self, r: &Ray, trange: std::ops::Range<f64>) -> Option<HitRecord> {
         let collisions = self.list.iter()
             .map(|object| object.hit(r, trange.clone()))
-            .filter(|rec| rec.collision)
+            .filter(|rec| !rec.is_none())
+            .map(|object| object.unwrap())
             .min_by(|rec1, rec2| rec1.t.total_cmp(&rec2.t));
         if !collisions.is_none() {
-            return collisions.unwrap()
+            return collisions
         }
-        HitRecord::setfail()
+        None
     }
 }

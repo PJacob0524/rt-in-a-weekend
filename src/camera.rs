@@ -59,9 +59,14 @@ impl Camera {
 
         let hit = objects.hit(r, Range{start: 0.001, end: f64::INFINITY});
 
-        if hit.collision {
+        if !hit.is_none() {
             //return (rec.normal + Color(1.0,1.0,1.0)) / 2.0; 
-            return Self::ray_color(&Ray{origin: hit.p, direction: hit.normal + Vec3::unitrand()}, objects, depth - 1) * 0.5;
+            let rec = hit.unwrap();
+            let scatter = rec.mat.scatter(r, &rec); 
+            if !scatter.is_none() {
+                return rec.mat.color() * Self::ray_color(&scatter.unwrap(), objects, depth - 1)
+            }
+            return Color::black() 
         }
     
         let a = (r.direction.unit().y() + 1.0) * 0.5;

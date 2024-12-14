@@ -61,6 +61,10 @@ impl Vec3 {
     pub fn empty() -> Self {
         Vec3(0.0,0.0,0.0)
     }
+
+    pub fn reflect(&self, surface: &Vec3) -> Self {
+        return *self - (*surface * surface.dot(self) * 2.0)
+    }
 }
 
 impl ops::Add<Vec3> for Vec3 {
@@ -180,5 +184,9 @@ impl Color{
         let g: i32 = (color.1 * 255.99) as i32;
         let b: i32 = (color.2 * 255.99) as i32;
         println!("{r} {g} {b}");
+    }
+
+    pub fn black() -> Self {
+        Color(0.0,0.0,0.0)
     }
 }
