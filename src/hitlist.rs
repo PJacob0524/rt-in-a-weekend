@@ -1,7 +1,7 @@
 #![allow(unused)]
 
 use crate::*;
-use std::vec;
+use std::{ops::RangeBounds, vec};
 
 pub struct Hitlist{
     list: Vec<Box<dyn Hittable>>
@@ -22,17 +22,14 @@ impl Hitlist {
 }
 
 impl Hittable for Hitlist {
-    fn hit(&self, r: &Ray, tmin: f64, tmax: f64, record: &mut HitRecord) -> bool {
-        let mut result = false;
-        let mut closest = tmax;
-
-        for item in self.list.iter() {
-            if item.hit(r, tmin, closest, record) {
-                result = true;
-                closest = record.t;
-            }
+    fn hit(&self, r: &Ray, trange: std::ops::Range<f64>) -> HitRecord {
+        let collisions = self.list.iter()
+            .map(|object| object.hit(r, trange.clone()))
+            .filter(|rec| rec.collision)
+            .min_by(|rec1, rec2| rec1.t.total_cmp(&rec2.t));
+        if !collisions.is_none() {
+            return collisions.unwrap()
         }
-
-        return result
+        HitRecord::setfail()
     }
 }

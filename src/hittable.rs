@@ -1,23 +1,43 @@
 #![allow(unused)]
 
+use std::collections::btree_map::Range;
+use std::ops::RangeBounds;
+
 use crate::vec3::*;
 use crate::ray::*;
 
-pub struct HitRecord {pub p: Point3, pub normal: Vec3, pub t: f64, pub front_face: bool}
+pub struct HitRecord {pub collision: bool, pub p: Point3, pub normal: Vec3, pub t: f64, pub front_face: bool}
 
 impl HitRecord {
-    fn set_face_normal(&mut self, r: &Ray, outward_normal: &Vec3) {
-        self.front_face = r.direction.dot(outward_normal) < 0.0;
-        if self.front_face {
-            self.normal = outward_normal.clone();
-        } else {
-            self.normal = outward_normal.clone() * -1.0;
+    pub fn setfail() -> Self {
+        HitRecord {
+            collision: false,
+            p: Vec3::empty(),
+            normal: Vec3::empty(), 
+            t: 0.0,
+            front_face: false
         }
+    }
+
+    pub fn set(r: &Ray, t: f64, outward_normal: &Vec3) -> Self {
+        let collision = true;
+        let t = t;
+        let p = r.at(t);
+        let mut normal = *outward_normal;
+    
+        let front_face = r.direction.dot(outward_normal) < 0.0;
+        if !front_face {
+            normal = outward_normal.clone() * -1.0;
+        }
+
+        HitRecord { collision, t, p, normal, front_face }
     }
 }
 
 pub trait Hittable {
-    fn hit(&self, r: &Ray, tmin: f64, tmax: f64, record: &mut HitRecord) -> bool { false }
+    fn hit(&self, r: &Ray, trange: std::ops::Range<f64>) -> HitRecord {
+        HitRecord::setfail()
+    }
 }
 
 pub struct Sphere {center: Point3, radius: f64}
@@ -29,7 +49,7 @@ impl Sphere {
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, r: &Ray, tmin: f64, tmax: f64, hit_record: &mut HitRecord) -> bool {
+    fn hit(&self, r: &Ray, trange: std::ops::Range<f64>) -> HitRecord {
         let co = self.center - r.origin;
 
         let a = r.direction.dot(&r.direction);
@@ -39,25 +59,20 @@ impl Hittable for Sphere {
         let discriminant = h * h - a * c;
 
         if discriminant < 0.0{
-            return false;
+            return HitRecord::setfail();
         }
 
         let sqrtd = discriminant.sqrt();
 
         let mut root = (h - sqrtd) / a;
-        if root < tmin || root > tmax {
+        if !trange.contains(&root) {
             root = (h + sqrtd) / a;
-            if root < tmin || root > tmax {
-                return false;
+            if !trange.contains(&root) {
+                return HitRecord::setfail();
             }
         }
-
-        hit_record.t = root;
-        hit_record.p = r.at(root);
         
-        let outward_normal = (hit_record.p - self.center) / self.radius;
-        hit_record.set_face_normal(r, &outward_normal);
-
-        true
+        let outward_normal = (r.at(root) - self.center) / self.radius;
+        HitRecord::set(r, root, &outward_normal)
     }
 }

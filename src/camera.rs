@@ -1,7 +1,7 @@
 #![allow(unused)]
 
 use core::f64;
-use std::array; 
+use std::{array, ops::Range}; 
 use rand::Rng; 
 
 use crate::*;
@@ -53,15 +53,15 @@ impl Camera {
     }
 
     fn ray_color(r: &Ray, objects: &mut dyn Hittable, depth: i64) -> Color {
-        let mut rec: HitRecord = HitRecord{p: Point3(0.0,0.0,0.0), normal: Vec3(0.0,0.0,0.0), t: 0.0, front_face: false}; 
-        
         if depth == 0 {
             return Vec3::empty()
         }
 
-        if objects.hit(r, 0.001, f64::INFINITY, &mut rec) {
+        let hit = objects.hit(r, Range{start: 0.001, end: f64::INFINITY});
+
+        if hit.collision {
             //return (rec.normal + Color(1.0,1.0,1.0)) / 2.0; 
-            return Self::ray_color(&Ray{origin: rec.p, direction: rec.normal + Vec3::unitrand()}, objects, depth - 1) * 0.5;
+            return Self::ray_color(&Ray{origin: hit.p, direction: hit.normal + Vec3::unitrand()}, objects, depth - 1) * 0.5;
         }
     
         let a = (r.direction.unit().y() + 1.0) * 0.5;
