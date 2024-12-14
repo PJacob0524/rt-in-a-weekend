@@ -3,23 +3,26 @@
 use std::collections::btree_map::Range;
 use std::ops::RangeBounds;
 
+use crate::material;
 use crate::vec3::*;
 use crate::ray::*;
+use crate::material::*;
 
-pub struct HitRecord {pub collision: bool, pub p: Point3, pub normal: Vec3, pub t: f64, pub front_face: bool}
+pub struct HitRecord<'a> {pub collision: bool, pub p: Point3, pub normal: Vec3, pub t: f64, pub front_face: bool, pub mat: &'a Option<Box<dyn Material>>}
 
-impl HitRecord {
+impl HitRecord<'_> {
     pub fn setfail() -> Self {
         HitRecord {
             collision: false,
             p: Vec3::empty(),
             normal: Vec3::empty(), 
             t: 0.0,
-            front_face: false
+            front_face: false,
+            mat: &Option::None
         }
     }
 
-    pub fn set(r: &Ray, t: f64, outward_normal: &Vec3) -> Self {
+    pub fn set<'a>(r: &Ray, t: f64, outward_normal: &Vec3, mat: &'a Option<Box<dyn Material>> ) -> HitRecord<'a> {
         let collision = true;
         let t = t;
         let p = r.at(t);
@@ -30,7 +33,7 @@ impl HitRecord {
             normal = outward_normal.clone() * -1.0;
         }
 
-        HitRecord { collision, t, p, normal, front_face }
+        HitRecord { collision, t, p, normal, front_face, mat }
     }
 }
 
@@ -40,11 +43,12 @@ pub trait Hittable {
     }
 }
 
-pub struct Sphere {center: Point3, radius: f64}
+pub struct Sphere {center: Point3, radius: f64, mat: Option<Box<dyn Material>> }
 
 impl Sphere {
-    pub fn new(center: Point3, radius: f64) -> Self {
-        Sphere { center, radius }
+    pub fn new(center: Point3, radius: f64, material: Box<dyn Material>) -> Self {
+        let mat = Some(material);
+        Sphere { center, radius, mat }
     }
 }
 
@@ -73,6 +77,6 @@ impl Hittable for Sphere {
         }
         
         let outward_normal = (r.at(root) - self.center) / self.radius;
-        HitRecord::set(r, root, &outward_normal)
+        HitRecord::set(r, root, &outward_normal, &self.mat)
     }
 }
