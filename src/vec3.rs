@@ -1,6 +1,7 @@
 #![allow(unused)]
 
 use rand::{Rng, RngCore}; 
+use std::cell::Ref;
 use std::ops;
 
 #[derive(Copy, Clone, Debug)]
@@ -64,6 +65,24 @@ impl Vec3 {
 
     pub fn reflect(&self, surface: &Vec3) -> Self {
         return *self - (*surface * surface.dot(self) * 2.0)
+    }
+
+    pub fn refract(&self, surface: &Vec3, refrac_ratio: f64) -> Self {
+        let cos_theta: f64 = (*self * -1.0).dot(surface).min(1.0);
+        let perpendicular: Vec3 = (*self + (*surface * cos_theta)) * refrac_ratio;
+        let parallel: Vec3 = *surface * -1.0 * (1.0 - perpendicular.length_squared()).sqrt();
+        return perpendicular + parallel;
+    }
+
+    pub fn unitdiskrand() -> Self {
+        loop {
+            let mut rand = Vec3::random(-1.0, 1.0);
+            rand.2 = 0.0;
+
+            if rand.length_squared() < 1.0 {
+                return rand;
+            }
+        }
     }
 }
 
