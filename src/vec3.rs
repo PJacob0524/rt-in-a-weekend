@@ -197,12 +197,12 @@ impl Color{
         Color(self.0.sqrt(), self.1.sqrt(), self.2.sqrt())
     }
 
-    pub fn write(&self) {
+    pub fn write(&self) -> String {
         let color = self.lin_to_gamma(); 
         let r: i32 = (color.0 * 255.99) as i32;
         let g: i32 = (color.1 * 255.99) as i32;
         let b: i32 = (color.2 * 255.99) as i32;
-        println!("{r} {g} {b}");
+        format!("{r} {g} {b}")
     }
 
     pub fn black() -> Self {

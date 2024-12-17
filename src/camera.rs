@@ -100,8 +100,8 @@ impl Camera {
         return Color(1.0,1.0,1.0)*(1.0-a) + Color(0.5,0.7,1.0)*a;
     }
     
-    pub fn render(&self, world: &mut dyn Hittable) {
-        println!("P3\n{} {}\n255", self.image_width, self.image_height);
+    pub fn render(&self, world: &mut Hitlist, mut file: File) {
+        writeln!(file, "P3\n{} {}\n255", self.image_width, self.image_height);
         let mut remaining: i64;
         let mut rng = rand::thread_rng(); 
 
@@ -126,7 +126,7 @@ impl Camera {
                     color += Camera::ray_color(&ray, world, self.max_depth);
                 }
                 color = color / (self.samples_per_pixel as f64 + 1.0); 
-                color.write();
+                writeln!(file, "{}", color.write());
             }
         }
         eprint!("\rDone.                            \n");
