@@ -23,18 +23,10 @@ impl Hitlist {
 
 impl Hittable for Hitlist {
     fn hit(&self, r: &Ray, trange: std::ops::Range<f64>) -> Option<HitRecord> {
-        let mut range = trange.clone();
-
         let collisions = self.list.iter()
-            .filter_map(|object| {
-                let rec = object.hit(r, range.clone());
-                if !rec.is_none() {
-                    let hit = rec.unwrap(); 
-                    range.end = hit.t;
-                    return Some(hit);
-                } else {
-                    return None;
-                }})
+            .map(|object| object.hit(r, trange.clone()))
+            .filter(|object| !object.is_none())
+            .map(|object| object.unwrap())
             .min_by(|rec1, rec2| rec1.t.total_cmp(&rec2.t));
         if !collisions.is_none() {
             return collisions

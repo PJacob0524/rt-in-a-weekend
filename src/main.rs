@@ -5,6 +5,7 @@ mod hitlist;
 mod camera;
 mod material;
 mod scene;
+//mod bbox;
 
 use rand::Rng;
 use std::time::Instant;
@@ -20,6 +21,7 @@ use hitlist::*;
 use camera::*;
 use material::*;
 use scene::*; 
+//use bbox::*;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
